@@ -9,16 +9,11 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', TemplateView.as_view(template_name='base.html')),
-
-    # Examples:
-    # url(r'^$', 'crawler.views.home', name='home'),
-    # url(r'^crawler/', include('crawler.foo.urls')),
-
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+)
+
+urlpatterns += patterns('google_plus',
+    url(r'^activity_list/$', 'views.activity_list'),
 )
 
 # Uncomment the next line to serve media files in dev.
