@@ -194,6 +194,8 @@ DJANGO_APPS = (
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
+    # Google Plus App
+    'google_plus',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -238,3 +240,8 @@ LOGGING = {
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 ########## END WSGI CONFIGURATION
+
+
+########## TEST CONFIGURATION
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+########## END TEST CONFIGURATION
