@@ -2,6 +2,7 @@
 
 from django.http import HttpResponse
 
+import time
 import json
 import requests
 from urlparse import urljoin
@@ -87,3 +88,19 @@ def google_api(url, params):
     response = r.json()
 
     return response
+
+
+def key_list(request):
+    object_type = request.GET.get('object_type')
+    f = open("%s-result-%s.txt" % (object_type, time.strftime('%Y%m%d-%H%M')), 'w')
+    
+    if object_type == 'activity':
+        object_querysets = ActivityObject.objects.all()
+    elif object_type == 'comment':
+        object_querysets = CommentObject.objects.all()
+
+    for object_queryset in object_querysets:
+        object_queryset = json.loads(object_queryset.json)
+        f.write(str(object_queryset['object'].keys()) + '\n')
+
+    f.close()
