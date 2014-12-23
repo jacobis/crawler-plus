@@ -6,12 +6,12 @@ import json
 import requests
 from urlparse import urljoin
 
-from .models import ActivityObject
+from .models import ActivityObject, CommentObject
 
 
 def activity_list(request):
-    user_id = request.GET.get('user_id', None)
-    query = request.GET.get('query', None)
+    user_id = request.GET.get('user_id')
+    query = request.GET.get('query')
     collection = request.GET.get('collection', 'public')
     language = request.GET.get('language', 'ko')
     key = request.GET.get('key')
@@ -25,19 +25,7 @@ def activity_list(request):
 
     params.update({'key': key})
 
-    item_list = []
-
-    while True:
-        response = google_api(url, params)
-        next_page_token = response.get('nextPageToken', None)
-        items = response.get('items')
-
-        if next_page_token:
-            params.update({'pageToken': next_page_token})
-        if items:
-            item_list += items
-        else:
-            break
+    item_list = get_item_list(url, params)
 
     activity_objects = [ActivityObject(json="%s" % json.dumps(item)) for item in item_list]
 
@@ -47,6 +35,46 @@ def activity_list(request):
     result = "총 %s개의 Activity가 수집되었습니다." % len(activity_objects)
 
     return HttpResponse(result)
+
+
+def comment_list(request):
+    activity_id = request.GET.get('activity_id')
+    key = request.GET.get('key')
+
+    url = 'activities/%s/comments' % activity_id
+    params = {'maxResults': 500}
+
+    params.update({'key': key})
+
+    item_list = get_item_list(url, params)
+
+    comment_objects = [CommentObject(json="%s" % json.dumps(item)) for item in item_list]
+
+    if comment_objects:
+        CommentObject.objects.bulk_create(comment_objects)
+
+    result = "총 %s개의 Comment가 수집되었습니다." % len(comment_objects)
+
+    return HttpResponse(result)
+
+
+def get_item_list(url, params):
+    item_list = []
+
+    while True:
+        response = google_api(url, params)
+        next_page_token = response.get('nextPageToken', None)
+        items = response.get('items')
+
+        if items:
+            item_list += items
+
+        if items and next_page_token:
+            params.update({'pageToken': next_page_token})
+        else:
+            break
+
+    return item_list
 
 
 def google_api(url, params):

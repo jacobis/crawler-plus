@@ -2,9 +2,8 @@
 
 from django.contrib import admin
 
-from .models import ActivityObject
+from .models import ActivityObject, CommentObject
 
-class ActivityObjectAdmin(admin.ModelAdmin):
+@admin.register(ActivityObject, CommentObject)
+class ObjectAdmin(admin.ModelAdmin):
     list_display = ['id']
-
-admin.site.register(ActivityObject, ActivityObjectAdmin)
