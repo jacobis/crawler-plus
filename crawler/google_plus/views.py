@@ -7,7 +7,7 @@ import json
 import requests
 from urlparse import urljoin
 
-from .models import ActivityObject, CommentObject
+from .models import ActivityJson, CommentJson
 
 
 def activity_list(request):
@@ -28,10 +28,10 @@ def activity_list(request):
 
     item_list = get_item_list(url, params)
 
-    activity_objects = [ActivityObject(json="%s" % json.dumps(item)) for item in item_list]
+    activity_objects = [ActivityJson(json="%s" % json.dumps(item)) for item in item_list]
 
     if activity_objects:
-        ActivityObject.objects.bulk_create(activity_objects)
+        ActivityJson.objects.bulk_create(activity_objects)
 
     result = "총 %s개의 Activity가 수집되었습니다." % len(activity_objects)
 
@@ -49,10 +49,10 @@ def comment_list(request):
 
     item_list = get_item_list(url, params)
 
-    comment_objects = [CommentObject(json="%s" % json.dumps(item)) for item in item_list]
+    comment_objects = [CommentJson(json="%s" % json.dumps(item)) for item in item_list]
 
     if comment_objects:
-        CommentObject.objects.bulk_create(comment_objects)
+        CommentJson.objects.bulk_create(comment_objects)
 
     result = "총 %s개의 Comment가 수집되었습니다." % len(comment_objects)
 
@@ -95,12 +95,17 @@ def key_list(request):
     f = open("%s-result-%s.txt" % (object_type, time.strftime('%Y%m%d-%H%M')), 'w')
     
     if object_type == 'activity':
-        object_querysets = ActivityObject.objects.all()
+        object_querysets = ActivityJson.objects.all()
     elif object_type == 'comment':
-        object_querysets = CommentObject.objects.all()
+        object_querysets = CommentJson.objects.all()
 
     for object_queryset in object_querysets:
         object_queryset = json.loads(object_queryset.json)
-        f.write(str(object_queryset['object'].keys()) + '\n')
+        try:
+            keys = object_queryset['object']['actor'].keys()
+            # keys = [attachment.keys() for attachment in attachments]
+            f.write(str(keys) + '\n')
+        except:
+            pass
 
     f.close()
