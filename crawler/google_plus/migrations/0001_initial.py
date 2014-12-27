@@ -31,7 +31,9 @@ class Migration(migrations.Migration):
             name='ActivityJson',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('object_id', models.CharField(unique=True, max_length=100)),
                 ('json', models.TextField()),
+                ('is_crawled', models.BooleanField(default=False)),
             ],
             options={
             },
@@ -76,6 +78,7 @@ class Migration(migrations.Migration):
                 ('image', models.URLField(blank=True)),
                 ('full_image', models.URLField(blank=True)),
                 ('embed', models.URLField(blank=True)),
+                ('activity_object', models.ForeignKey(to='google_plus.ActivityObject')),
             ],
             options={
             },
@@ -104,17 +107,14 @@ class Migration(migrations.Migration):
             name='CommentJson',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('activity_id', models.CharField(max_length=100)),
+                ('object_id', models.CharField(max_length=100)),
                 ('json', models.TextField()),
+                ('is_crawled', models.BooleanField(default=False)),
             ],
             options={
             },
             bases=(models.Model,),
-        ),
-        migrations.AddField(
-            model_name='activityobject',
-            name='attachment',
-            field=models.OneToOneField(null=True, blank=True, to='google_plus.Attachment'),
-            preserve_default=True,
         ),
         migrations.AddField(
             model_name='activity',

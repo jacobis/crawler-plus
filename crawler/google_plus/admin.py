@@ -7,6 +7,7 @@ from .models import Actor, Attachment, ActivityObject, Activity, Comment, Activi
 @admin.register(ActivityJson, CommentJson)
 class ObjectAdmin(admin.ModelAdmin):
     list_display = ['id']
+    search_fields = ['json']
 
 admin.site.register(Actor)
 admin.site.register(Attachment)
