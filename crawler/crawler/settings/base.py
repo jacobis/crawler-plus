@@ -198,8 +198,13 @@ LOCAL_APPS = (
     'google_plus',
 )
 
+THIRD_PARTY_APPS = (
+    # Celery
+    'djcelery',
+)
+
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
-INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 ########## END APP CONFIGURATION
 
 
@@ -245,3 +250,14 @@ WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 ########## TEST CONFIGURATION
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 ########## END TEST CONFIGURATION
+
+
+########## CELERY CONFIGURATION
+BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_ENABLE_UTC = True
+CELERY_TIME_ZONE = 'Asia/Seoul'
+########## END CELERY CONFIGURATION

@@ -13,8 +13,7 @@ urlpatterns = patterns('',
 )
 
 urlpatterns += patterns('google_plus',
-    url(r'^activity_list/$', 'views.activity_list'),
-    url(r'^comment_list/$', 'views.comment_list'),
+    url(r'^activities/$', 'views.activities'),
     url(r'^key_list/$', 'views.key_list'),
 )
 
