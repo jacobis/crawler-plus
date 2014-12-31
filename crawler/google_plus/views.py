@@ -7,32 +7,25 @@ import json
 import requests
 from urlparse import urljoin
 
-from .tasks import crawl_activities
+from .tasks import crawl_activities, fetch_to_json, parse_to_object
 
 
 def activities(request):
     request_get = request.GET.copy()
     crawl_activities(request_get)
 
-    return HttpResponse('Request done!')
+    return HttpResponse('Crawl activity request done!')
 
 
-def key_list(request):
-    object_type = request.GET.get('object_type')
-    f = open("%s-result-%s.txt" % (object_type, time.strftime('%Y%m%d-%H%M')), 'w')
-    
-    if object_type == 'activity':
-        object_querysets = ActivityJson.objects.all()
-    elif object_type == 'comment':
-        object_querysets = CommentJson.objects.all()
+def fetch_json(request):
+    request_get = request.GET.copy()
+    fetch_to_json(request_get)
 
-    for object_queryset in object_querysets:
-        object_queryset = json.loads(object_queryset.json)
-        try:
-            keys = object_queryset['object']['actor'].keys()
-            # keys = [attachment.keys() for attachment in attachments]
-            f.write(str(keys) + '\n')
-        except:
-            pass
+    return HttpResponse('Fetch to json request done!')
 
-    f.close()
+
+def parse_object(request):
+    request_get = request.GET.copy()
+    parse_to_object(request_get)
+
+    return HttpResponse('Parse to object request done!')

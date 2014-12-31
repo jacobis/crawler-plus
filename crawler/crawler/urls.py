@@ -14,7 +14,8 @@ urlpatterns = patterns('',
 
 urlpatterns += patterns('google_plus',
     url(r'^activities/$', 'views.activities'),
-    url(r'^key_list/$', 'views.key_list'),
+    url(r'^fetch_json/$', 'views.fetch_json'),
+    url(r'^parse_object/$', 'views.parse_object'),
 )
 
 # Uncomment the next line to serve media files in dev.

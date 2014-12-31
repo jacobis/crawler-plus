@@ -25,12 +25,12 @@ def activities(request_get):
 
     item_list = items(url, params)
 
-    activity_objects = [ActivityJson(object_id=item['id'], json="%s" % json.dumps(item)) for item in item_list if not ActivityJson.objects.filter(object_id=item['id']).exists()]
+    activity_objects = [ActivityJson(object_id=item['id'], comment_total_items=item['object']['replies']['totalItems'], json="%s" % json.dumps(item)) for item in item_list if not ActivityJson.objects.filter(object_id=item['id']).exists()]
 
     if activity_objects:
-        activity_objects = ActivityJson.objects.bulk_create(activity_objects)
+        activities_json = ActivityJson.objects.bulk_create(activity_objects)
 
-    return activity_objects
+    return activities_json
 
 
 def comments(request_get):
