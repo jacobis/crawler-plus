@@ -2,9 +2,8 @@
 
 from __future__ import absolute_import
 
-import time
 from json import loads
-from celery import task, chain
+from celery import task
 
 from .models import Activity, ActivityJson, CommentJson
 from .api import activities, comments
