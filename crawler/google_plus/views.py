@@ -25,7 +25,6 @@ def fetch_json(request):
 
 
 def parse_object(request):
-    request_get = request.GET.copy()
-    parse_to_object(request_get)
+    parse_to_object()
 
     return HttpResponse('Parse to object request done!')

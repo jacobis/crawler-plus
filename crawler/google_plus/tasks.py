@@ -2,30 +2,28 @@
 
 from __future__ import absolute_import
 
-from json import loads
-from celery import task
+import json
+from celery import task, chain
+from celery.exceptions import SoftTimeLimitExceeded
 
-from .models import Activity, ActivityJson, CommentJson
+from .models import Actor, Activity, ActivityObject, ActivityJson, CommentJson
 from .api import activities, comments
-from .parse import store_actor, store_activity_object, store_attachments, parse_activity, parse_comment
+from .parse import parse_save_actor, parse_save_activity_object, parse_save_attachment, parse_save_activity, parse_save_comment
 
 
-@task(ignore_result=True)
+@task
 def crawl_activities(request_get):
-    fetch_to_json.apply_async((request_get,), link=parse_to_object.s(direct=False))
+    fetch_to_json.apply_async((request_get,), link=parse_to_object.si())
 
 
 @task
 def fetch_to_json(request_get):
     activities_json = fetch_activities_json(request_get)
-    activities = [{'activity_id':activity_json.object_id, 'comment_total_items':activity_json.comment_total_items} for activity_json in activities_json]
-    request_get.update({'activities':activities})
+    activities = [activity_json.object_id for activity_json in activities_json]
 
     for activity in activities:
-        request_get.update({'activity_id':activity['activity_id']})
+        request_get.update({'activity_id':activity})
         fetch_comments_json.delay(request_get)
-
-    return request_get
 
 
 def fetch_activities_json(request_get):
@@ -34,52 +32,96 @@ def fetch_activities_json(request_get):
     return activities_json
     
 
-@task(ignore_result=True)
+@task
 def fetch_comments_json(request_get):
     comments(request_get)
 
 
-@task(ignore_result=True)
-def parse_to_object(request_get, direct=True):
-    if direct:
-        activities = request_get.get('activities').split(',')
-        for activity in activities:
-            request_get.update({'activity_id':activity, 'comment_total_items':ActivityJson.objects.get(object_id=activity).comment_total_items})
-            
-            store_activity.apply_async((request_get,), link=store_comment.s())
-
-    else:
-        activities = request_get.get('activities')
-        for activity in activities:
-            request_get.update({'activity_id':activity['activity_id'], 'comment_total_items':activity['comment_total_items']})
-            
-            store_activity.apply_async((request_get,), link=store_comment.s())
-
-    
 @task
-def store_activity(request_get):
-    activity_id = request_get.get('activity_id')
-    activity = loads(ActivityJson.objects.get(object_id=activity_id).json)
-
-    actor = store_actor(activity.get('actor'))
-    activity_object = store_activity_object(activity.get('object'))
-    store_attachments(activity.get('object'), activity_object)
-    activity = parse_activity(activity, actor, activity_object)
-    activity.save()
-
-    return request_get
+def parse_to_object():
+    activity_parse_to_object.apply_async((), link=comment_parse_to_object.si())
 
 
-@task(ignore_result=True)
-def store_comment(request_get):
-    if request_get.get('comment_total_items') > 0:
-        activity_id = request_get.get('activity_id')
-        activity = Activity.objects.get(activity_id=activity_id)
-        comments = CommentJson.objects.filter(activity_id=activity_id)
+@task
+def activity_parse_to_object():
+    for activity_json in ActivityJson.objects.filter(is_crawled=False):
+        activity = json.loads(activity_json.data)
+        activity_object_maker.delay(activity) 
 
-        for comment in comments:
-            comment = loads(comment.json)
 
-            actor = store_actor(comment.get('actor'))
-            comment = parse_comment(activity, comment, actor)
-            comment.save()
+@task
+def comment_parse_to_object():
+    for comment_json in CommentJson.objects.filter(is_crawled=False):
+        comment = json.loads(comment_json.data)
+        comment_object_maker.delay(comment)
+
+
+@task
+def activity_object_maker(activity):
+    activity_id = chain(
+        store_actor.s(activity.get('actor')),
+        store_activity_object.s(activity.get('object')),
+        store_attachments.s(activity.get('object')),
+        store_activity.s(activity)
+    ).apply_async()
+    
+    return activity_id
+
+
+@task
+def comment_object_maker(comment):
+    comment_id = chain(
+        store_actor.s(comment.get('actor')),
+        store_comment.s(comment)
+    ).apply_async()
+    
+    return comment_id
+
+
+@task
+def store_actor(actor):
+    actor = parse_save_actor(actor)
+    data = {'actor_id': actor.id}
+    
+    return data
+
+
+@task
+def store_activity_object(data, activity_object):
+    activity_object = parse_save_activity_object(activity_object)
+    data['activity_object_id'] = activity_object.id
+    
+    return data
+
+
+@task
+def store_attachments(data, activity_object):
+    attachments = activity_object.get('attachments')
+    activity_object = ActivityObject.objects.get(id=data['activity_object_id'])
+
+    if attachments:
+        for attachment in attachments:
+            parse_save_attachment(attachment, activity_object)
+    
+    return data
+
+
+@task(time_limit=10)
+def store_activity(data, activity):
+    try:
+        actor = Actor.objects.get(id=data['actor_id'])
+        activity_object = ActivityObject.objects.get(id=data['activity_object_id'])
+        parse_save_activity(actor, activity_object, activity)
+    except SoftTimeLimitExceeded:
+        raise self.retry(countdown=5)
+
+
+@task(bind=True, time_limit=10)
+def store_comment(self, data, comment):
+    try:
+        activity = Activity.objects.get(activity_id=comment.get('id').split('.')[0])
+        actor = Actor.objects.get(id=data['actor_id'])
+        parse_save_comment(activity, actor, comment)
+
+    except (SoftTimeLimitExceeded, Exception):
+        raise self.retry(countdown=5)
