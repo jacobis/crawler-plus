@@ -106,13 +106,6 @@ STATICFILES_FINDERS = (
 ########## END STATIC FILE CONFIGURATION
 
 
-########## SECRET CONFIGURATION
-# See: https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
-# Note: This key should only be used for development and testing.
-SECRET_KEY = r"bl#+fs#1mab5s*uog62b1td6w*@s+278b9x7tjc+b@f69)5(s&"
-########## END SECRET CONFIGURATION
-
-
 ########## SITE CONFIGURATION
 # Hosts/domain names that are valid for this site
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -199,6 +192,8 @@ LOCAL_APPS = (
 )
 
 THIRD_PARTY_APPS = (
+    # Django Extensions
+    'django_extensions',
     # Celery
     'djcelery',
 )
@@ -253,13 +248,19 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 
 ########## CELERY CONFIGURATION
-BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+CELERY_IGNORE_RESULT = True
+
 CELERY_ENABLE_UTC = True
 CELERY_TIME_ZONE = 'Asia/Seoul'
 ########## END CELERY CONFIGURATION
+
+
+########## SECRET CONFIGURATION
+# See: https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
+# Note: This key should only be used for development and testing.
+SECRET_KEY = "bl#+fs#1mab5s*uog62b1td6w*@s+278b9x7tjc+b@f69)5(s&"
+########## END SECRET CONFIGURATION

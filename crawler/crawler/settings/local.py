@@ -51,7 +51,6 @@ CACHES = {
 # See: http://django-debug-toolbar.readthedocs.org/en/latest/installation.html#explicit-setup
 INSTALLED_APPS += (
     'debug_toolbar',
-    'django_extensions',
 )
 
 MIDDLEWARE_CLASSES += (
@@ -63,3 +62,9 @@ DEBUG_TOOLBAR_PATCH_SETTINGS = False
 # http://django-debug-toolbar.readthedocs.org/en/latest/installation.html
 INTERNAL_IPS = ('127.0.0.1',)
 ########## END TOOLBAR CONFIGURATION
+
+
+########## CELERY CONFIGURATION
+BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+CELERY_RESULT_BACKEND = 'amqp://guest:guest@localhost:5672//'
+########## END CELERY CONFIGURATION
