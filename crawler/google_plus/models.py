@@ -6,15 +6,15 @@ from django.db import models
 class Actor(models.Model):
     actor_id = models.CharField(max_length=100, unique=True)
     display_name = models.CharField(max_length=200)
-    url = models.URLField(max_length=500)
-    image = models.URLField(max_length=500, blank=True)
+    url = models.TextField()
+    image = models.TextField(blank=True)
 
 
 class ActivityObject(models.Model):
     object_type = models.CharField(max_length=30)
     object_id = models.CharField(max_length=100, blank=True)
     content = models.TextField()
-    url = models.URLField(max_length=500)
+    url = models.TextField()
     plusoners = models.IntegerField()
     resharers = models.IntegerField()
 
@@ -22,12 +22,12 @@ class ActivityObject(models.Model):
 class Attachment(models.Model):
     activity_object = models.ForeignKey(ActivityObject)
     object_type = models.CharField(max_length=30)
-    display_name = models.CharField(max_length=500)
+    display_name = models.TextField()
     content = models.TextField()
-    url = models.URLField(max_length=500)
-    image = models.URLField(max_length=500, blank=True)
-    full_image = models.URLField(max_length=500, blank=True)
-    embed = models.URLField(max_length=500, blank=True)
+    url = models.TextField()
+    image = models.TextField(blank=True)
+    full_image = models.TextField(blank=True)
+    embed = models.TextField(blank=True)
 
 
 class Activity(models.Model):
@@ -36,7 +36,7 @@ class Activity(models.Model):
     published = models.DateTimeField()
     updated = models.DateTimeField()
     activity_id = models.CharField(max_length=100, unique=True)
-    url = models.URLField(max_length=500)
+    url = models.TextField()
     actor = models.ForeignKey(Actor)
     verb = models.CharField(max_length=30)
     activity_object = models.ForeignKey(ActivityObject)
@@ -52,21 +52,20 @@ class Comment(models.Model):
     updated = models.DateTimeField()
     actor = models.ForeignKey(Actor)
     content = models.TextField()
-    self_link = models.URLField(max_length=500)
+    self_link = models.TextField()
     plusoners = models.IntegerField()
         
 
 class ActivityJson(models.Model):
     object_id = models.CharField(max_length=100, unique=True)
-    json = models.TextField()
-    comment_total_items = models.IntegerField()
+    data = models.TextField()
     is_crawled = models.BooleanField(default=False)
     
 
 class CommentJson(models.Model):
     activity_id = models.CharField(max_length=100)
     object_id = models.CharField(max_length=100)
-    json = models.TextField()
+    data = models.TextField()
     is_crawled = models.BooleanField(default=False)
 
     unique_together = ("activity_id", "object_id")

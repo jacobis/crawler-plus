@@ -25,7 +25,7 @@ def activities(request_get):
 
     item_list = items(url, params)
 
-    activity_objects = [ActivityJson(object_id=item['id'], comment_total_items=item['object']['replies']['totalItems'], json="%s" % json.dumps(item)) for item in item_list if not ActivityJson.objects.filter(object_id=item['id']).exists()]
+    activity_objects = [ActivityJson(object_id=item['id'], data="%s" % json.dumps(item)) for item in item_list if not ActivityJson.objects.filter(object_id=item['id']).exists()]
 
     if activity_objects:
         activities_json = ActivityJson.objects.bulk_create(activity_objects)
@@ -44,7 +44,7 @@ def comments(request_get):
 
     item_list = items(url, params)
 
-    comment_objects = [CommentJson(activity_id=activity_id, object_id=item['id'], json="%s" % json.dumps(item)) for item in item_list if not CommentJson.objects.filter(activity_id=activity_id, object_id=item['id']).exists()]
+    comment_objects = [CommentJson(activity_id=activity_id, object_id=item['id'], data="%s" % json.dumps(item)) for item in item_list if not CommentJson.objects.filter(activity_id=activity_id, object_id=item['id']).exists()]
 
     if comment_objects:
         CommentJson.objects.bulk_create(comment_objects)
