@@ -18,18 +18,20 @@ def crawl_activities(request_get):
 
 @task
 def fetch_to_json(request_get):
-    activities_json = fetch_activities_json(request_get)
-    activities = [activity_json.object_id for activity_json in activities_json]
-
-    for activity in activities:
-        request_get.update({'activity_id':activity})
-        fetch_comments_json.delay(request_get)
-
-
-def fetch_activities_json(request_get):
-    activities_json = activities(request_get)
+    activity_jsons = fetch_activity_jsons(request_get)
     
-    return activities_json
+    if activity_jsons:
+        activities = [activity_json.object_id for activity_json in activity_jsons]
+
+        for activity in activities:
+            request_get.update({'activity_id':activity})
+            fetch_comments_json.delay(request_get)
+
+
+def fetch_activity_jsons(request_get):
+    activity_jsons = activities(request_get)
+    
+    return activity_jsons
     
 
 @task
@@ -44,16 +46,22 @@ def parse_to_object():
 
 @task
 def activity_parse_to_object():
-    for activity_json in ActivityJson.objects.filter(is_crawled=False):
+    activity_jsons = ActivityJson.objects.filter(is_crawled=False)
+    for activity_json in activity_jsons:
         activity = json.loads(activity_json.data)
         activity_object_maker.delay(activity) 
+
+    activity_jsons.update(is_crawled=True)
 
 
 @task
 def comment_parse_to_object():
-    for comment_json in CommentJson.objects.filter(is_crawled=False):
+    comment_jsons = CommentJson.objects.filter(is_crawled=False)
+    for comment_json in comment_jsons:
         comment = json.loads(comment_json.data)
         comment_object_maker.delay(comment)
+
+    comment_jsons.update(is_crawled=True)
 
 
 @task

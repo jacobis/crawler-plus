@@ -28,9 +28,9 @@ def activities(request_get):
     activity_objects = [ActivityJson(object_id=item['id'], data="%s" % json.dumps(item)) for item in item_list if not ActivityJson.objects.filter(object_id=item['id']).exists()]
 
     if activity_objects:
-        activities_json = ActivityJson.objects.bulk_create(activity_objects)
-
-    return activities_json
+        activity_objects = ActivityJson.objects.bulk_create(activity_objects)
+    
+    return activity_objects
 
 
 def comments(request_get):
