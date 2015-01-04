@@ -187,6 +187,8 @@ DJANGO_APPS = (
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
+    # Component App
+    'component',
     # Google Plus App
     'google_plus',
 )
