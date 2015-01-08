@@ -35,4 +35,5 @@ def parse_object(request):
 def activities_export_to_csv(request, actor_id):
     activities = Activity.objects.filter(actor__actor_id=actor_id)
     activities = activities.values('id', 'kind', 'published', 'updated', 'activity_id', 'url', 'actor__actor_id', 'actor__display_name', 'actor__url', 'actor__image', 'verb', 'activity_object__object_type', 'activity_object__object_id', 'activity_object__content', 'activity_object__url', 'activity_object__plusoners', 'activity_object__resharers', 'annotation')
+    
     return djqscsv.render_to_csv_response(activities)

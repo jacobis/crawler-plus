@@ -13,11 +13,17 @@ from .parse import parse_save_actor, parse_save_activity_object, parse_save_atta
 
 @task
 def crawl_activities(request_get):
+    """ crawl_activities
+    fetch_to_json module, parse_to_object module을 순차적으로 실행합니다.
+    """
     fetch_to_json.apply_async((request_get,), link=parse_to_object.si())
 
 
 @task
 def fetch_to_json(request_get):
+    """ fetch_to_json
+    fetch_activity_jsons module을 실행시키고, fetch된 activity가 있을 경우, fetch_comments_json을 실행합니다.
+    """
     activity_jsons = fetch_activity_jsons(request_get)
     
     if activity_jsons:
@@ -29,6 +35,11 @@ def fetch_to_json(request_get):
 
 
 def fetch_activity_jsons(request_get):
+    """ fetch_activity_jsons
+    조건에 맞는 activities를 fetch 합니다.
+    :param request_get: GET 메소드로 user_id 또는 query, collection, language, key 값이 포함되어야 합니다.
+    :return object: fetch된 activities가 담긴 object list를 돌려줍니다.
+    """
     activity_jsons = activities(request_get)
     
     return activity_jsons
@@ -36,16 +47,26 @@ def fetch_activity_jsons(request_get):
 
 @task
 def fetch_comments_json(request_get):
+    """ fetch_comments_json
+    fetch된 activities의 comments를 fetch합니다.
+    :param request_get: GET 메소드로 activity_id, key 값이 포함되어야 합니다.
+    """
     comments(request_get)
 
 
 @task
 def parse_to_object():
+    """ parse_to_object
+    fetch된 json object를 parse하여 google plus 스키마 형태의 obejct로 저장합니다.
+    """
     activity_parse_to_object.apply_async((), link=comment_parse_to_object.si())
 
 
 @task
 def activity_parse_to_object():
+    """
+    fetch된 ActivityJson object 중 이 작업을 수행하지 않은 object를 가져와 작업을 진행합니다.
+    """
     activity_jsons = ActivityJson.objects.filter(is_crawled=False)
     for activity_json in activity_jsons:
         activity = json.loads(activity_json.data)
@@ -56,6 +77,9 @@ def activity_parse_to_object():
 
 @task
 def comment_parse_to_object():
+    """
+    fetch된 CommentJson object 중 이 작업을 수행하지 않은 object를 가져와 작업을 진행합니다.
+    """
     comment_jsons = CommentJson.objects.filter(is_crawled=False)
     for comment_json in comment_jsons:
         comment = json.loads(comment_json.data)
@@ -66,24 +90,26 @@ def comment_parse_to_object():
 
 @task
 def activity_object_maker(activity):
+    """
+    ActivityJson obejct를 parse하여 actor, activity_object, attachments, activity 순으로 저장합니다.
+    """
     activity_id = chain(
         store_actor.s(activity.get('actor')),
         store_activity_object.s(activity.get('object')),
         store_attachments.s(activity.get('object')),
         store_activity.s(activity)
     ).apply_async()
-    
-    return activity_id
 
 
 @task
 def comment_object_maker(comment):
+    """
+    CommnetJson object를 parse하여 actor, comment 순으로 저장합니다.
+    """
     comment_id = chain(
         store_actor.s(comment.get('actor')),
         store_comment.s(comment)
     ).apply_async()
-    
-    return comment_id
 
 
 @task

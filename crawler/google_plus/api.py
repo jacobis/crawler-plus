@@ -49,8 +49,6 @@ def comments(request_get):
     if comment_objects:
         CommentJson.objects.bulk_create(comment_objects)
 
-    return comment_objects
-
 
 def items(url, params):
     item_list = []
