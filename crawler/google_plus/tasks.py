@@ -6,11 +6,12 @@ import json
 from celery import task, chain
 from celery.exceptions import SoftTimeLimitExceeded
 
-from .models import Actor, Activity, ActivityObject, ActivityJson, CommentJson
+from .models import Actor, Activity, ActivityObject, ActivityJson, Comment, CommentJson
 from .api import activities, comments
 from .parse import parse_save_actor, parse_save_activity_object, parse_save_attachment, parse_save_activity, parse_save_comment
 
 
+# Crawl Tasks
 @task
 def crawl_activities(request_get):
     fetch_to_json.apply_async((request_get,), link=parse_to_object.si())
@@ -133,3 +134,26 @@ def store_comment(self, data, comment):
 
     except (SoftTimeLimitExceeded, Exception):
         raise self.retry(countdown=5)
+
+
+# CSV Tasks
+@task
+def export_activities_csv(request_get):
+    import djqscsv
+    
+    actor_id = request_get.get('actor_id')
+    since = request_get.get('since')
+    until = request_get.get('until')
+
+    activities = Activity.objects.filter(actor__actor_id=actor_id)
+    activities = activity.filter(updated__range=[since, until]) if since and until else activities
+    activities = activities.values('id', 'kind', 'published', 'updated', 'activity_id', 'url', 'actor__actor_id', 'actor__display_name', 'actor__url', 'actor__image', 'verb', 'activity_object__object_type', 'activity_object__object_id', 'activity_object__content', 'activity_object__url', 'activity_object__plusoners', 'activity_object__resharers', 'annotation', 'comments')
+
+
+    for activity in activities:
+        comments = Comment.objects.filter(activity=activity['id'])
+        comments = comments.values('id', 'activity', 'kind', 'verb', 'comment_id', 'published', 'updated', 'actor__actor_id', 'actor__display_name', 'actor__url', 'actor__image', 'content', 'self_link', 'plusoners')
+
+        activity.update({'comments': comments}) 
+
+    return djqscsv.render_to_csv_response(activities)
